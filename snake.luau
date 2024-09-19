@@ -217,5 +217,5 @@ end
 
 stdio.stdout:write(stdio.cursorMove("home"));
 stdio.stdout:write(stdio.erase("entire"));
-stdio.stdout:write("You died");
+stdio.stdout:write(`You died, score {#snake.tail}\n`);
 process.exit(0);
