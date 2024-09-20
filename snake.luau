@@ -97,6 +97,10 @@ local _sig_quit_reset: thread?;
 local function gameInterrupt()
     _sig_count += 1;
     if (_sig_count > 1) then
+        if (not stdio.terminal:restoreMode()) then
+            print("Failed to restore terminal mode, depending on your terminal you might crash");
+        end
+        
         process.exit(0);
     else
         print("Press Ctrl+C again to exit");
