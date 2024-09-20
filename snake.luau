@@ -170,6 +170,22 @@ local function renderSnake()
         end
     end
 
+    for i = #RenderQueue, 1, -1 do
+        local flag = false;
+        for ipart, part in RenderQueue do
+            if (i == ipart) then
+                continue;
+            end
+            if (not isDiff(RenderQueue[i], part)) then
+                flag = true;
+                break;
+            end
+        end
+        if (flag) then
+            table.remove(RenderQueue, i);
+        end
+    end
+
     for i, v in RenderQueue do
         renderPart(v.x, v.y);
         table.insert(LAST_RENDER_STATE.parts, {
@@ -180,8 +196,8 @@ local function renderSnake()
 end
 
 local function renderGame()
-    stdio.stdout:write(stdio.cursorMove("home"));
     if (LAST_RENDER_STATE.score ~= #snake.tail) then
+        stdio.stdout:write(stdio.cursorMove("home"));
         stdio.stdout:write(`Score: {#snake.tail}`);
         LAST_RENDER_STATE.score = #snake.tail;
     end
