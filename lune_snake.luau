@@ -78,7 +78,7 @@ local LAST_RENDER_STATE = {
 };
 
 local function clearPart(part : RenderedPart)
-    stdio.write(`\x1b[{part.y + 1};{part.x * 2}H`);
+    stdio.write(`\x1b[{part.y + 1};{(part.x * 2) + 1}H`);
     stdio.write("  ");
 end
 
@@ -97,7 +97,7 @@ end
 
 local function renderSnake()
     local function renderPart(x : number, y : number)
-        stdio.write(`\x1b[{y + 1};{x * 2}H`);
+        stdio.write(`\x1b[{y + 1};{(x * 2) + 1}H`);
         stdio.write("\x1b[42m");
         stdio.write(`  `);
         stdio.write(stdio.color("reset"));
@@ -224,7 +224,7 @@ local function renderGame()
     renderSnake();
 
     if (renderApple) then
-        stdio.write(`\x1b[{snake.food.y + 1};{snake.food.x * 2}H`);
+        stdio.write(`\x1b[{snake.food.y + 1};{(snake.food.x * 2) + 1}H`);
         stdio.write("🍎");
         copyPart(LAST_RENDER_STATE.food, snake.food);
     end
