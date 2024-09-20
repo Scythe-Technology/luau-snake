@@ -212,7 +212,6 @@ local function renderGame()
 
     renderSnake();
 
-    stdio.stdout:write(stdio.cursorMove("goto", WIN_Y + 1, WIN_X));
     stdio.stdout:write("\x1b[?25l");
 end
 
