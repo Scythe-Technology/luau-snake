@@ -90,7 +90,7 @@ local LAST_RENDER_STATE = {
 };
 
 local function clearPart(part : RenderedPart)
-    stdio.stdout:write(stdio.cursorMove("goto", part.y + 1, part.x * 2));
+    stdio.stdout:write(stdio.cursorMove("goto", part.y + 1, (part.x * 2) + 1));
     stdio.stdout:write(" ");
 end
 
@@ -109,7 +109,7 @@ end
 
 local function renderSnake()
     local function renderPart(x : number, y : number)
-        stdio.stdout:write(stdio.cursorMove("goto", y + 1, x * 2));
+        stdio.stdout:write(stdio.cursorMove("goto", y + 1, (x * 2) + 1));
         stdio.stdout:write("🟩");
     end
 
@@ -195,10 +195,30 @@ local function renderSnake()
     end
 end
 
+local function renderBorder()
+    for i = 1, WIN_Y do
+        stdio.stdout:write(stdio.cursorMove("goto", i + 1, 1));
+        stdio.stdout:write(stdio.bgcolor("white"));
+        stdio.stdout:write("  ");
+        stdio.stdout:write("\x1b[0m");
+        stdio.stdout:write(stdio.cursorMove("goto", i + 1, WIN_X + 3));
+        stdio.stdout:write(stdio.bgcolor("white"));
+        stdio.stdout:write("  ");
+        stdio.stdout:write("\x1b[0m");
+    end
+    stdio.stdout:write(stdio.bgcolor("white"));
+    stdio.stdout:write(stdio.cursorMove("goto", WIN_Y + 2, 0));
+    stdio.stdout:write(`{string.rep(" ", WIN_X + 4)}`);
+    stdio.stdout:write(`\x1b[0m`);
+end
+
 local function renderGame()
     if (LAST_RENDER_STATE.score ~= #snake.tail) then
         stdio.stdout:write(stdio.cursorMove("home"));
-        stdio.stdout:write(`Score: {#snake.tail}`);
+        local ScoreDisplay = `Score: {#snake.tail}`;
+        stdio.stdout:write(`\x1b[1;30;47m{ScoreDisplay}`);
+        stdio.stdout:write(`{string.rep(" ", WIN_X + 4 - #ScoreDisplay)}`);
+        stdio.stdout:write(`\x1b[0m`);
         LAST_RENDER_STATE.score = #snake.tail;
     end
 
@@ -213,7 +233,7 @@ local function renderGame()
     renderSnake();
 
     if (renderApple) then
-        stdio.stdout:write(stdio.cursorMove("goto", snake.food.y + 1, snake.food.x * 2));
+        stdio.stdout:write(stdio.cursorMove("goto", snake.food.y + 1, (snake.food.x * 2) + 1));
         stdio.stdout:write("🍎");
         copyPart(LAST_RENDER_STATE.food, snake.food);
     end
@@ -342,6 +362,8 @@ task.spawn(function()
 end)
 
 stdio.stdout:write(stdio.erase("entire"));
+
+renderBorder();
 
 while true do
     task.wait(SPEED);

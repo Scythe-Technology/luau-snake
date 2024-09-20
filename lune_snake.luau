@@ -183,10 +183,31 @@ local function renderSnake()
     end
 end
 
+local function renderBorder()
+    for i = 1, WIN_Y do
+        stdio.write(`\x1b[{i + 1};{1}H`);
+        stdio.write("\x1b[47m");
+        stdio.write("  ");
+        stdio.write("\x1b[0m");
+        stdio.write(`\x1b[{i + 1};{WIN_X + 3}H`);
+        stdio.write("\x1b[47m");
+        stdio.write("  ");
+        stdio.write("\x1b[0m");
+    end
+    stdio.write(`\x1b[47m`);
+    stdio.write(`\x1b[{WIN_Y + 2};0H`);
+    stdio.write(`{string.rep(" ", WIN_X + 4)}`);
+    stdio.write(`\x1b[0m`);
+end
+
 local function renderGame()
     if (LAST_RENDER_STATE.score ~= #snake.tail) then
         stdio.write(`\x1b[H`);
-        stdio.write(`Score: {#snake.tail}`);
+        local ScoreDisplay = `Score: {#snake.tail}`;
+        stdio.write(`\x1b[47m{ScoreDisplay}`);
+        stdio.write(`{string.rep(" ", WIN_X + 4 - #ScoreDisplay)}`);
+        stdio.write(`\x1b[0m`);
+
         LAST_RENDER_STATE.score = #snake.tail;
     end
 
@@ -197,7 +218,7 @@ local function renderGame()
         end
         renderApple = true;
     end
-    
+
     renderSnake();
 
     if (renderApple) then
@@ -206,7 +227,7 @@ local function renderGame()
         copyPart(LAST_RENDER_STATE.food, snake.food);
     end
     
-    stdio.write(`\x1b[{WIN_Y + 2};{0}H`);
+    stdio.write(`\x1b[{WIN_Y + 3};{0}H`);
     stdio.write("\x1b[?25l");
 end
 
@@ -255,6 +276,8 @@ end
 local _ = stdio.prompt("confirm", "How to play on lune:\n\n- Press ESC to continue to next frame.\n- Select the direction using arrow keys & press enter\n\nEnjoy!");
 
 stdio.write("\x1b[2J");
+
+renderBorder()
 
 while true do
     moveFigure(snake);
