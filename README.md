@@ -1,7 +1,5 @@
 # Luau-Snake
-A simple snake game made in Luau with [Zune](https://github.com/Scythe-Technology/Zune)
-
-For an alternative version with [Lune](https://github.com/lune-org/lune), use `lune_snake.luau`.
+A simple snake game made in Luau with [Zune](https://github.com/Scythe-Technology/Zune) & [Lune](https://github.com/lune-org/lune)
 
 ![](https://github.com/user-attachments/assets/644cff62-f137-482f-9a15-1ceb65b1c647)
 

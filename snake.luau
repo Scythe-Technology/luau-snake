@@ -15,7 +15,7 @@ WIN_X = math.min(WIN_X, 30);
 WIN_Y = math.min(WIN_Y, 12);
 WIN_Y -= 1;
 
-local SPEED = 0.15;
+local SPEED = 0.145;
 
 local DIR_UP = 0;
 local DIR_RIGHT = 1;
@@ -152,6 +152,7 @@ local function moveFigure(part : SnakePart)
     part.x, part.y = forwardMotion(part);
 end
 
+local DIRECTION_QUEUE = {}::{number};
 task.spawn(function()
     while true do
         task.wait();
@@ -165,20 +166,31 @@ task.spawn(function()
             if (inputs[2] ~= 91) then
                 continue;
             end
-            local lastDir = snake.dir;
+            local lastDir = DIRECTION_QUEUE[#DIRECTION_QUEUE] or snake.dir;
+            local newDirection;
             if (inputs[3] == 65) then
-                snake.dir = DIR_UP;
+                newDirection= DIR_UP;
             elseif (inputs[3] == 66) then
-                snake.dir = DIR_DOWN;
+                newDirection = DIR_DOWN;
             elseif (inputs[3] == 67) then
-                snake.dir = DIR_RIGHT;
+                newDirection = DIR_RIGHT;
             elseif (inputs[3] == 68) then
-                snake.dir = DIR_LEFT;
+                newDirection = DIR_LEFT;
+            else
+                continue;
             end
-            local nX, nY = forwardMotion(snake)
+            if (lastDir == newDirection) then
+                continue;
+            end
+            local nX, nY = forwardMotion({
+                x = snake.x,
+                y = snake.y,
+                dir = newDirection
+            })
             if (checkTailCollision(nX, nY)) then
-                snake.dir = lastDir;
+                continue;
             end
+            table.insert(DIRECTION_QUEUE, newDirection);
         elseif (inputs[1] == 0x03 or inputs[1] == 0x04) then
             gameInterrupt();
         end
@@ -187,6 +199,11 @@ end)
 
 while true do
     task.wait(SPEED);
+
+    local newDir = table.remove(DIRECTION_QUEUE, 1);
+    if (newDir) then
+        snake.dir = newDir;
+    end
 
     moveFigure(snake);
     for i = #snake.tail, 1, -1 do
@@ -218,4 +235,8 @@ end
 stdio.stdout:write(stdio.cursorMove("home"));
 stdio.stdout:write(stdio.erase("entire"));
 stdio.stdout:write(`You died, score {#snake.tail}\n`);
+if (not stdio.terminal:restoreMode()) then
+    print("Failed to restore terminal mode, depending on your terminal you might crash");
+end
+
 process.exit(0);
