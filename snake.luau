@@ -91,7 +91,7 @@ local LAST_RENDER_STATE = {
 
 local function clearPart(part : RenderedPart)
     stdio.stdout:write(stdio.cursorMove("goto", part.y + 1, (part.x * 2) + 1));
-    stdio.stdout:write(" ");
+    stdio.stdout:write("  ");
 end
 
 local function isInitialized(part : RenderedPart)
@@ -110,7 +110,9 @@ end
 local function renderSnake()
     local function renderPart(x : number, y : number)
         stdio.stdout:write(stdio.cursorMove("goto", y + 1, (x * 2) + 1));
-        stdio.stdout:write("🟩");
+        stdio.stdout:write(stdio.bgcolor("green"));
+        stdio.stdout:write("  ");
+        stdio.stdout:write(stdio.reset());
     end
 
     local RenderQueue = {}::{RenderedPart};
@@ -200,16 +202,16 @@ local function renderBorder()
         stdio.stdout:write(stdio.cursorMove("goto", i + 1, 1));
         stdio.stdout:write(stdio.bgcolor("white"));
         stdio.stdout:write("  ");
-        stdio.stdout:write("\x1b[0m");
+        stdio.stdout:write(stdio.reset());
         stdio.stdout:write(stdio.cursorMove("goto", i + 1, WIN_X + 3));
         stdio.stdout:write(stdio.bgcolor("white"));
         stdio.stdout:write("  ");
-        stdio.stdout:write("\x1b[0m");
+        stdio.stdout:write(stdio.reset());
     end
     stdio.stdout:write(stdio.bgcolor("white"));
     stdio.stdout:write(stdio.cursorMove("goto", WIN_Y + 2, 0));
     stdio.stdout:write(`{string.rep(" ", WIN_X + 4)}`);
-    stdio.stdout:write(`\x1b[0m`);
+    stdio.stdout:write(stdio.reset());
 end
 
 local function renderGame()
@@ -218,7 +220,7 @@ local function renderGame()
         local ScoreDisplay = `Score: {#snake.tail}`;
         stdio.stdout:write(`\x1b[1;30;47m{ScoreDisplay}`);
         stdio.stdout:write(`{string.rep(" ", WIN_X + 4 - #ScoreDisplay)}`);
-        stdio.stdout:write(`\x1b[0m`);
+        stdio.stdout:write(stdio.reset());
         LAST_RENDER_STATE.score = #snake.tail;
     end
 

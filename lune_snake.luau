@@ -79,7 +79,7 @@ local LAST_RENDER_STATE = {
 
 local function clearPart(part : RenderedPart)
     stdio.write(`\x1b[{part.y + 1};{part.x * 2}H`);
-    stdio.write(" ");
+    stdio.write("  ");
 end
 
 local function isInitialized(part : RenderedPart)
@@ -98,7 +98,9 @@ end
 local function renderSnake()
     local function renderPart(x : number, y : number)
         stdio.write(`\x1b[{y + 1};{x * 2}H`);
-        stdio.write(`🟩`);
+        stdio.write("\x1b[42m");
+        stdio.write(`  `);
+        stdio.write(stdio.color("reset"));
     end
 
     local RenderQueue = {}::{RenderedPart};
@@ -188,16 +190,16 @@ local function renderBorder()
         stdio.write(`\x1b[{i + 1};{1}H`);
         stdio.write("\x1b[47m");
         stdio.write("  ");
-        stdio.write("\x1b[0m");
+        stdio.write(stdio.color("reset"));
         stdio.write(`\x1b[{i + 1};{WIN_X + 3}H`);
         stdio.write("\x1b[47m");
         stdio.write("  ");
-        stdio.write("\x1b[0m");
+        stdio.write(stdio.color("reset"));
     end
     stdio.write(`\x1b[47m`);
     stdio.write(`\x1b[{WIN_Y + 2};0H`);
     stdio.write(`{string.rep(" ", WIN_X + 4)}`);
-    stdio.write(`\x1b[0m`);
+    stdio.write(stdio.color("reset"));
 end
 
 local function renderGame()
@@ -206,7 +208,7 @@ local function renderGame()
         local ScoreDisplay = `Score: {#snake.tail}`;
         stdio.write(`\x1b[47m{ScoreDisplay}`);
         stdio.write(`{string.rep(" ", WIN_X + 4 - #ScoreDisplay)}`);
-        stdio.write(`\x1b[0m`);
+        stdio.write(stdio.color("reset"));
 
         LAST_RENDER_STATE.score = #snake.tail;
     end
