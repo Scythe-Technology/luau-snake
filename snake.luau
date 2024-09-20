@@ -213,6 +213,7 @@ local function renderGame()
     renderSnake();
 
     stdio.stdout:write(stdio.cursorMove("goto", WIN_Y + 1, WIN_X));
+    stdio.stdout:write("\x1b[?25l");
 end
 
 spawnFood();
@@ -251,7 +252,6 @@ local function growSnake()
     });
 end
 
-
 local function forwardMotion(part : SnakePart): (number, number)
     local x, y = part.x, part.y;
     if (part.dir == DIR_UP) then
@@ -283,6 +283,16 @@ end
 
 local DIRECTION_QUEUE = {}::{number};
 task.spawn(function()
+    print("Press arrow keys to move, Ctrl+C to exit");
+    print("");
+    print("Press any key to start");
+    while true do
+        local input = stdio.stdin:read(3);
+        if (not input) then
+            continue;
+        end
+        break;
+    end
     while true do
         task.wait();
         local input = stdio.stdin:read(3);

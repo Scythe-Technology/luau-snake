@@ -63,24 +63,148 @@ local function spawnFood()
     snake.food.y = ny;
 end
 
-local function renderGame()
-    stdio.write("\x1b[H");
-    stdio.write("\x1b[2J");
-    stdio.write(`Score: {#snake.tail}`);
-    stdio.write(`\x1b[{snake.food.y + 1};{snake.food.x * 2}H`);
-    stdio.write(`🍎`);
-    stdio.write(`\x1b[{snake.y + 1};{snake.x * 2}H`);
-    stdio.write(`🟩`);
-    for i, v in snake.tail do
-        stdio.write(`\x1b[{v.y + 1};{v.x * 2}H`);
+type RenderedPart = {
+    x: number,
+    y: number,
+}
+
+local LAST_RENDER_STATE = {
+    score = -1,
+    food = {
+        x = -1,
+        y = -1
+    },
+    parts = {}::{RenderedPart},
+};
+
+local function clearPart(part : RenderedPart)
+    stdio.write(`\x1b[{part.y + 1};{part.x * 2}H`);
+    stdio.write(" ");
+end
+
+local function isInitialized(part : RenderedPart)
+    return part.x ~= -1 and part.y ~= -1;
+end
+
+local function copyPart(part : RenderedPart, copy : RenderedPart)
+    part.x = copy.x;
+    part.y = copy.y;
+end
+
+local function isDiff(part : RenderedPart, other : RenderedPart)
+    return part.x ~= other.x or part.y ~= other.y;
+end
+
+local function renderSnake()
+    local function renderPart(x : number, y : number)
+        stdio.write(`\x1b[{y + 1};{x * 2}H`);
         stdio.write(`🟩`);
     end
+
+    local RenderQueue = {}::{RenderedPart};
+    local ClearQueue = {}::{RenderedPart};
+
+    for i, v in LAST_RENDER_STATE.parts do
+        if (not isDiff(snake, v)) then
+            continue;
+        end
+        local flag = false;
+        for _, tail in snake.tail do
+            if (not isDiff(tail, v)) then
+                flag = true;
+                break;
+            end
+        end
+        if (flag) then
+            continue;
+        end
+        table.insert(ClearQueue, v);
+        break;
+    end
+
+    do
+        local flag = false;
+        for _, part in LAST_RENDER_STATE.parts do
+            if (not isDiff(snake, part)) then
+                flag = true;
+                break;
+            end
+        end
+        if (not flag) then
+            table.insert(RenderQueue, snake);
+        end
+    end
+
+    for i, v in snake.tail do
+        local flag = false;
+        for _, part in LAST_RENDER_STATE.parts do
+            if (not isDiff(v, part)) then
+                flag = true;
+                break;
+            end
+        end
+        if (not flag) then
+            table.insert(RenderQueue, v);
+        end
+    end
+
+    for _, v in ClearQueue do
+        clearPart(v);
+        for i = #LAST_RENDER_STATE.parts, 1, -1 do
+            if (not isDiff(LAST_RENDER_STATE.parts[i], v)) then
+                table.remove(LAST_RENDER_STATE.parts, i);
+                break;
+            end
+        end
+    end
+
+    for i = #RenderQueue, 1, -1 do
+        local flag = false;
+        for ipart, part in RenderQueue do
+            if (i == ipart) then
+                continue;
+            end
+            if (not isDiff(RenderQueue[i], part)) then
+                flag = true;
+                break;
+            end
+        end
+        if (flag) then
+            table.remove(RenderQueue, i);
+        end
+    end
+
+    for i, v in RenderQueue do
+        renderPart(v.x, v.y);
+        table.insert(LAST_RENDER_STATE.parts, {
+            x = v.x,
+            y = v.y
+        });
+    end
+end
+
+local function renderGame()
+    if (LAST_RENDER_STATE.score ~= #snake.tail) then
+        stdio.write(`\x1b[H`);
+        stdio.write(`Score: {#snake.tail}`);
+        LAST_RENDER_STATE.score = #snake.tail;
+    end
+    if (isDiff(LAST_RENDER_STATE.food, snake.food)) then
+        if (isInitialized(LAST_RENDER_STATE.food)) then
+            clearPart(LAST_RENDER_STATE.food);
+        end
+        stdio.write(`\x1b[{snake.food.y + 1};{snake.food.x * 2}H`);
+        stdio.write("🍎");
+        copyPart(LAST_RENDER_STATE.food, snake.food);
+    end
+    
+    renderSnake();
+    
     stdio.write(`\x1b[{WIN_Y + 2};{0}H`);
+    stdio.write("\x1b[?25l");
 end
 
 spawnFood();
-
-local _ = stdio.prompt("confirm", "How to play on lune:\n\n- Press ESC to continue to next frame.\n- Select the direction using arrow keys & press enter\n\nEnjoy!");
 
 local function growSnake()
     local last = snake.tail[#snake.tail] or snake;
@@ -121,6 +245,10 @@ end
 local function moveFigure(part : SnakePart)
     part.x, part.y = forwardMotion(part);
 end
+
+local _ = stdio.prompt("confirm", "How to play on lune:\n\n- Press ESC to continue to next frame.\n- Select the direction using arrow keys & press enter\n\nEnjoy!");
+
+stdio.write("\x1b[2J");
 
 while true do
     moveFigure(snake);
