@@ -201,16 +201,22 @@ local function renderGame()
         stdio.stdout:write(`Score: {#snake.tail}`);
         LAST_RENDER_STATE.score = #snake.tail;
     end
+
+    local renderApple = false;
     if (isDiff(LAST_RENDER_STATE.food, snake.food)) then
         if (isInitialized(LAST_RENDER_STATE.food)) then
             clearPart(LAST_RENDER_STATE.food);
         end
+        renderApple = true;
+    end
+
+    renderSnake();
+
+    if (renderApple) then
         stdio.stdout:write(stdio.cursorMove("goto", snake.food.y + 1, snake.food.x * 2));
         stdio.stdout:write("🍎");
         copyPart(LAST_RENDER_STATE.food, snake.food);
     end
-
-    renderSnake();
 
     stdio.stdout:write("\x1b[?25l");
 end
