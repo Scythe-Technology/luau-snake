@@ -75,18 +75,127 @@ local function spawnFood()
     snake.food.y = ny;
 end
 
-local function renderGame()
-    stdio.stdout:write(stdio.cursorMove("home"));
-    stdio.stdout:write(stdio.erase("entire"));
-    stdio.stdout:write(`Score: {#snake.tail}`);
-    stdio.stdout:write(stdio.cursorMove("goto", snake.food.y + 1, snake.food.x * 2));
-    stdio.stdout:write("🍎");
-    stdio.stdout:write(stdio.cursorMove("goto", snake.y + 1, snake.x * 2));
-    stdio.stdout:write("🟩");
-    for i, v in snake.tail do
-        stdio.stdout:write(stdio.cursorMove("goto", v.y + 1, v.x * 2));
+type RenderedPart = {
+    x: number,
+    y: number,
+}
+
+local LAST_RENDER_STATE = {
+    score = -1,
+    food = {
+        x = -1,
+        y = -1
+    },
+    parts = {}::{RenderedPart},
+};
+
+local function clearPart(part : RenderedPart)
+    stdio.stdout:write(stdio.cursorMove("goto", part.y + 1, part.x * 2));
+    stdio.stdout:write(" ");
+end
+
+local function isInitialized(part : RenderedPart)
+    return part.x ~= -1 and part.y ~= -1;
+end
+
+local function copyPart(part : RenderedPart, copy : RenderedPart)
+    part.x = copy.x;
+    part.y = copy.y;
+end
+
+local function isDiff(part : RenderedPart, other : RenderedPart)
+    return part.x ~= other.x or part.y ~= other.y;
+end
+
+local function renderSnake()
+    local function renderPart(x : number, y : number)
+        stdio.stdout:write(stdio.cursorMove("goto", y + 1, x * 2));
         stdio.stdout:write("🟩");
     end
+
+    local RenderQueue = {}::{RenderedPart};
+    local ClearQueue = {}::{RenderedPart};
+
+    for i, v in LAST_RENDER_STATE.parts do
+        if (not isDiff(snake, v)) then
+            continue;
+        end
+        local flag = false;
+        for _, tail in snake.tail do
+            if (not isDiff(tail, v)) then
+                flag = true;
+                break;
+            end
+        end
+        if (flag) then
+            continue;
+        end
+        table.insert(ClearQueue, v);
+        break;
+    end
+
+    do
+        local flag = false;
+        for _, part in LAST_RENDER_STATE.parts do
+            if (not isDiff(snake, part)) then
+                flag = true;
+                break;
+            end
+        end
+        if (not flag) then
+            table.insert(RenderQueue, snake);
+        end
+    end
+
+    for i, v in snake.tail do
+        local flag = false;
+        for _, part in LAST_RENDER_STATE.parts do
+            if (not isDiff(v, part)) then
+                flag = true;
+                break;
+            end
+        end
+        if (not flag) then
+            table.insert(RenderQueue, v);
+        end
+    end
+
+    for _, v in ClearQueue do
+        clearPart(v);
+        for i = #LAST_RENDER_STATE.parts, 1, -1 do
+            if (not isDiff(LAST_RENDER_STATE.parts[i], v)) then
+                table.remove(LAST_RENDER_STATE.parts, i);
+                break;
+            end
+        end
+    end
+
+    for i, v in RenderQueue do
+        renderPart(v.x, v.y);
+        table.insert(LAST_RENDER_STATE.parts, {
+            x = v.x,
+            y = v.y
+        });
+    end
+end
+
+local function renderGame()
+    stdio.stdout:write(stdio.cursorMove("home"));
+    if (LAST_RENDER_STATE.score ~= #snake.tail) then
+        stdio.stdout:write(`Score: {#snake.tail}`);
+        LAST_RENDER_STATE.score = #snake.tail;
+    end
+    if (isDiff(LAST_RENDER_STATE.food, snake.food)) then
+        if (isInitialized(LAST_RENDER_STATE.food)) then
+            clearPart(LAST_RENDER_STATE.food);
+        end
+        stdio.stdout:write(stdio.cursorMove("goto", snake.food.y + 1, snake.food.x * 2));
+        stdio.stdout:write("🍎");
+        copyPart(LAST_RENDER_STATE.food, snake.food);
+    end
+
+    renderSnake();
+
     stdio.stdout:write(stdio.cursorMove("goto", WIN_Y + 1, WIN_X));
 end
 
@@ -200,6 +309,8 @@ task.spawn(function()
         end
     end
 end)
+
+stdio.stdout:write(stdio.erase("entire"));
 
 while true do
     task.wait(SPEED);
